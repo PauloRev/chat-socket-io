@@ -6,8 +6,8 @@
 - **2** Tenha o Node JS e MongoDB em sua máquina
 - **3** Crie uma database com o nome **chat-socketio**
 - **4** Depois de criada a database inicie seu MongoDB
-- **5** na raíz do projeto instale as dependencias com **npm install** ou **yarn install**
-- **6** Tudo certo? agora ainda na raíz do projeto rode o seguinte comando **npm dev** ou **yarn dev**
+- **5** na raíz do projeto instale as dependencias com **yarn install** ou **npm install**
+- **6** Tudo certo? agora ainda na raíz do projeto rode o seguinte comando **yarn dev** ou rode apenas um **node index.js**
 - **7** Agora abra seu navegador e entre em **localhost:3333**
 - **8** Pronto :)
 
