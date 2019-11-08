@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <!-- Meta tags Obrigatórias -->
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+      crossorigin="anonymous"
+    />
+
+    <title>Chat Socket-io | Rooms</title>
+  </head>
+  <body>
+    <div class="container" style="width: 920px; margin: 30px auto;">
+      <header class="row">
+        <div class="col">
+          <h1>Chat Socket.io</h1>
+          <h6 class="text-muted">Seja bem-vindo :)</h6>
+          <hr />
+        </div>
+      </header>
+      <section class="row">
+        <div class="col-sm-4">
+          <h3>Salas disponíveis</h3>
+          <button class="btn btn-primary btn-block add-room mt-2 mb-2">
+            Nova sala +
+          </button>
+          <article
+            class="room-list list-group"
+            style="overflow-y: auto;"
+          ></article>
+        </div>
+        <div class="col-sm-8">
+          <article class="card">
+            <div
+              class="card-body list-messages"
+              style="height: 400px; overflow-y: auto;"
+            ></div>
+            <div class="card-footer pt-4">
+              <div class="row">
+                <div class="col">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      class="form-control msg"
+                      placeholder="Digite sua mensagem e pressione <Enter>"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <!-- JavaScript (Opcional) -->
+    <!-- jQuery primeiro, depois Popper.js, depois Bootstrap JS -->
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+      integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+      integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+      crossorigin="anonymous"
+    ></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      $(function() {
+        const socket = io();
+        let selectedRoom = "";
+
+        const addRoom = (id, roomName) => {
+          $(".room-list").append(`
+              <a href="#" id="${id}" data-id="${id}" class="list-group-item list-group-item-action">${roomName} <span class="notifications badge badge-primary"><span>0</span></span></a>
+            `);
+          $(`#${id} .notifications`).hide();
+        };
+
+        const addMessage = msg => {
+          const html = `
+          <div class="card mb-2">
+            <div class="card-body">
+              <strong class="card-title">${msg.author}</strong>
+              <p class="card-text">${msg.message}</p>
+            </div>
+          </div>
+          `;
+          $(".list-messages").append(html);
+        };
+
+        // Messages
+        $(".msg").keyup(function(key) {
+          if (selectedRoom !== "" && key.keyCode === 13) {
+            socket.emit("sendMsg", {
+              msg: $(".msg").val(),
+              room: selectedRoom
+            });
+            $(".msg").val("");
+          }
+        });
+        // List Messages
+        socket.on("newMsg", msg => {
+          if (selectedRoom === msg.room) {
+            addMessage(msg);
+          } else {
+            const id = msg.room;
+            let count = parseInt($(`#${id} .notifications span`).text());
+            count++;
+            $(`#${id} .notifications span`).text(count);
+          }
+        });
+
+        socket.on("msgsList", msgs => {
+          $(".list-messages").html("");
+          msgs.map(addMessage);
+        });
+
+        // Rooms
+        // SelectedRoom
+        $(".room-list").on("click", ".list-group-item", function() {
+          const roomId = $(this).attr("data-id");
+          socket.emit("join", roomId);
+          selectedRoom = roomId;
+          $(`#${roomId} .notifications`).show();
+          $(`#${roomId} .notifications span`).text("0");
+        });
+        // Create New Room
+        socket.on("newRoom", room => {
+          addRoom(room._id, room.name);
+        });
+        // Get Rooms List
+        socket.on("roomList", rooms => {
+          $(".room-list").html("");
+          rooms.map(room => {
+            addRoom(room._id, room.name);
+          });
+        });
+        $(".add-room").click(function() {
+          const roomName = prompt("Informe o nome da sala:");
+          if (roomName) {
+            socket.emit("addRoom", roomName);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
